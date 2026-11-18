@@ -57,6 +57,7 @@ function playDevicePronunciation(word,audio){
   try{window.speechSynthesis.speak(utterance);}catch{utterance.onerror();}
 }
 function playWordAudio(word,audio,native=false){
+  if(!native){playDevicePronunciation(word,audio);return;}
   if(!word||!audio)return;stopAllAudio();audioPlayback.word=word;const request=audioPlayback.request;audioPlayback.abort=new AbortController();unlockWordAudio();
   playbackTargetStatus(audio,'Loading audio… / Đang tải âm thanh…');
   const failure=e=>{if(request!==audioPlayback.request||e.name==='AbortError')return;playbackTargetStatus(audio,'Audio could not load. Try Open audio or reload this page. / Chưa tải được âm thanh. Thử Mở âm thanh hoặc tải lại trang.');};
