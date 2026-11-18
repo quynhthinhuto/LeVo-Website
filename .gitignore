@@ -1,0 +1,13 @@
+.local/
+outputs/
+node_modules/
+.env*
+.dev.vars*
+audio/
+
+node_modules/
+.next/
+.vercel/
+.env
+.env.local
+.DS_Store

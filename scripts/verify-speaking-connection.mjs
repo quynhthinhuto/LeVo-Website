@@ -1,0 +1,9 @@
+import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';
+let calls=0;const c=vm.createContext({console,AbortController,setTimeout,clearTimeout,setInterval:()=>0,clearInterval(){},URL,URLSearchParams,Blob,location:{search:''},view:'discover',currentModal:null,window:{addEventListener(){}},document:{addEventListener(){}},esc:v=>String(v),fetch:async()=>{calls++;return new Response('<html>static preview</html>',{headers:{'content-type':'text/html'}});}});
+vm.runInContext(readFileSync('dist/speaking.js','utf8'),c);
+await vm.runInContext('ensureSpeakingConfig()',c);assert.match(vm.runInContext('speakingConnectionNotice()',c),/npm start/);assert.match(vm.runInContext('speakingConnectionNotice()',c),/speaking-reconnect/);
+await vm.runInContext('ensureSpeakingConfig()',c);assert.equal(calls,1,'Rendering does not create an endless retry loop');
+c.fetch=async()=>{calls++;return Response.json({enabled:false,reason:'api_key_missing',local:true});};await vm.runInContext('ensureSpeakingConfig(true)',c);let notice=vm.runInContext('speakingConnectionNotice()',c);assert.match(notice,/href="\/setup"/);assert.match(notice,/Connect AI/);assert.equal(vm.runInContext('speakingPractice.configError',c),'');
+c.fetch=async()=>Response.json({enabled:true,local:true});await vm.runInContext('ensureSpeakingConfig(true)',c);assert.equal(vm.runInContext('speakingConnectionNotice()',c),'','A successful reconnect clears the setup/error message');
+vm.runInContext('speakingPractice.config=null',c);c.fetch=async()=>Response.json({error:'Service temporarily unavailable'},{status:503});await vm.runInContext('ensureSpeakingConfig(true)',c);assert.match(vm.runInContext('speakingConnectionNotice()',c),/Service temporarily unavailable/);
+console.log('PASS: static-file diagnosis; bounded config attempts; explicit missing-key setup; manual reconnect; successful recovery; useful service errors.');
